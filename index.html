@@ -1,0 +1,85 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Clientes</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; display: flex; flex-wrap: wrap; gap: 20px; }
+        form { border: 1px solid #ccc; padding: 15px; border-radius: 8px; width: 250px; }
+        .lista { width: 100%; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    </style>
+</head>
+<body>
+
+    <form id="formCrear">
+        <h3>Crear Cliente</h3>
+        <input type="text" id="rutC" placeholder="RUT" required><br><br>
+        <input type="text" id="nomC" placeholder="Nombre" required><br><br>
+        <input type="number" id="edaC" placeholder="Edad" required><br><br>
+        <button type="submit">Guardar</button>
+    </form>
+
+    <form id="formModificar">
+        <h3>Modificar Nombre</h3>
+        <input type="text" id="rutM" placeholder="RUT del cliente" required><br><br>
+        <input type="text" id="nomM" placeholder="Nuevo Nombre" required><br><br>
+        <button type="submit">Actualizar</button>
+    </form>
+
+    <form id="formEliminar">
+        <h3>Eliminar Cliente</h3>
+        <input type="text" id="rutE" placeholder="RUT a eliminar" required><br><br>
+        <button type="submit">Eliminar</button>
+    </form>
+
+    <div class="lista">
+        <h3>Listado de Clientes <button onclick="obtenerClientes()">Refrescar</button></h3>
+        <table id="tablaClientes">
+            <thead><tr><th>RUT</th><th>Nombre</th><th>Edad</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/clientes';
+
+        async function obtenerClientes() {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            const tbody = document.querySelector('#tablaClientes tbody');
+            tbody.innerHTML = data.map(c => `<tr><td>${c.rut}</td><td>${c.nombre}</td><td>${c.edad}</td></tr>`).join('');
+        }
+
+        document.getElementById('formCrear').onsubmit = async (e) => {
+            e.preventDefault();
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ rut: rutC.value, nombre: nomC.value, edad: parseInt(edaC.value) })
+            });
+            if(res.ok) { alert('Creado'); obtenerClientes(); } else { alert('Error: ' + (await res.json()).error); }
+        };
+
+        document.getElementById('formModificar').onsubmit = async (e) => {
+            e.preventDefault();
+            const res = await fetch(`${API_URL}/${rutM.value}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ nombre: nomM.value })
+            });
+            if(res.ok) { alert('Actualizado'); obtenerClientes(); } else { alert('No encontrado'); }
+        };
+
+        document.getElementById('formEliminar').onsubmit = async (e) => {
+            e.preventDefault();
+            const res = await fetch(`${API_URL}/${rutE.value}`, { method: 'DELETE' });
+            if(res.ok) { alert('Eliminado'); obtenerClientes(); } else { alert('No encontrado'); }
+        };
+
+        window.onload = obtenerClientes;
+    </script>
+</body>
+</html>
